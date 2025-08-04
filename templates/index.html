@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crack Detection Using AI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        #result img {
+            width: 100%;
+            max-width: 300px;
+            margin-top: 10px;
+        }
+        canvas {
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Crack Detection Using AI</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="imageUpload" name="image" accept="image/*" required>
+            <button type="submit" id="uploadButton">Upload Image</button>
+        </form>
+        
+        <div id="result">
+            <!-- Prediction and image will appear here -->
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("uploadButton").addEventListener("click", function (event) {
+            event.preventDefault(); // Prevent form from submitting
+
+            const formData = new FormData();
+            const fileInput = document.getElementById("imageUpload");
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select an image to upload.");
+                return;
+            }
+
+            formData.append("image", file);
+
+            // Make the POST request to upload the image
+            fetch("http://localhost:3000/upload", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const prediction = data.prediction;
+                const accuracy = data.accuracy;
+                const imagePath = data.image;
+
+                // Show results
+                document.getElementById("result").innerHTML = `
+                    <h3>Prediction: ${prediction}</h3>
+                    <h4>Accuracy: ${accuracy}%</h4>
+                    <img src="http://localhost:3000/${imagePath}" alt="Uploaded Image">
+                    <canvas id="accuracyChart"></canvas>
+                `;
+
+                // Draw graph (chart) for accuracy
+                const ctx = document.getElementById('accuracyChart').getContext('2d');
+                const chart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Cracked', 'Not Cracked'],
+                        datasets: [{
+                            label: 'Prediction Confidence',
+                            data: [accuracy, 100 - accuracy],
+                            backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(75, 192, 192, 0.2)'],
+                            borderColor: ['rgba(255, 99, 132, 1)', 'rgba(75, 192, 192, 1)'],
+                            borderWidth: 1
+                        }]
+                    }
+                });
+            })
+            .catch(error => {
+                console.error("Error uploading image:", error);
+                alert("Failed to upload image.");
+            });
+        });
+    </script>
+    
+    <!-- Add Chart.js for the graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>
